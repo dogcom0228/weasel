@@ -1,0 +1,54 @@
+## ADDED Requirements
+
+### Requirement: Linux host build of the portable parser layer
+
+The project SHALL provide a harness under `test/host/` that compiles the real IPC text-protocol
+parser translation units (`WeaselIPC/ResponseParser.cpp`, `Deserializer.cpp`, `ActionLoader.cpp`,
+`ContextUpdater.cpp`, `Committer.cpp`, `Configurator.cpp`, `Styler.cpp`) together with
+`include/WeaselIPCData.h` on a Linux host that has no Windows SDK, using a minimal `windows.h` shim.
+The harness MUST NOT require modifying any shipped source file.
+
+#### Scenario: Harness builds on Linux without a Windows toolchain
+
+- **WHEN** `test/host/run.sh` is executed in an environment with the documented toolchain (g++ ≥ 13,
+  Boost with serialization) and no MSVC/Windows SDK
+- **THEN** the real parser translation units and the golden test compile and link successfully
+
+#### Scenario: Shim provides only what the parse path needs
+
+- **WHEN** the parser sources are compiled against `test/host/shim/`
+- **THEN** the shim supplies the Win32 typedefs, a no-op `MessageBoxA`, `_wtoi`, and the portable
+  `unescape_string`/`EscapeChar` helpers, and no shipped header is edited to make the build succeed
+
+### Requirement: Golden tests assert current IPC protocol behavior
+
+The harness SHALL include golden tests that feed server-formatted responses through the parser and
+assert the reconstructed data, covering at least: `action=noop`; `commit` with escape/unescape;
+`ctx.preedit` with a three-field `cursor`; `status.*` flags; and a boost-archive round-trip of
+`CandidateInfo` via the current `ctx.cand=<archive>` protocol. A failing assertion MUST make the
+harness exit non-zero.
+
+#### Scenario: All golden assertions pass on current code
+
+- **WHEN** `test/host/run.sh` runs against the current parser sources
+- **THEN** every golden assertion passes and the process exits with status 0
+
+#### Scenario: A parser regression is caught
+
+- **WHEN** the parser or data model is changed such that a covered protocol case no longer
+  reconstructs the expected data
+- **THEN** at least one golden assertion fails and the harness exits with a non-zero status equal to
+  the number of failed assertions
+
+### Requirement: Candidate boost-archive round-trip fidelity
+
+The harness SHALL verify that a `CandidateInfo` serialized with boost `text_woarchive` (as the
+server does in `RimeWithWeasel::_Respond`) is reconstructed field-for-field by the client parser,
+guarding the boost-archive wire format against accidental change.
+
+#### Scenario: CandidateInfo survives serialize → parse
+
+- **WHEN** a `CandidateInfo` with candidates, labels, page, and highlight is boost-serialized into a
+  `ctx.cand=<archive>` line and parsed
+- **THEN** the parsed `CandidateInfo` equals the original in candidate strings, highlight index, and
+  page counts
