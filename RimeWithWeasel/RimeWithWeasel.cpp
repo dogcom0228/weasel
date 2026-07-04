@@ -12,7 +12,6 @@
 #include <regex>
 #include <rime_api.h>
 
-#define TRANSPARENT_COLOR 0x00000000
 #define ARGB2ABGR(value)                                 \
   ((value & 0xff000000) | ((value & 0x000000ff) << 16) | \
    (value & 0x0000ff00) | ((value & 0x00ff0000) >> 16))
@@ -726,13 +725,6 @@ bool RimeWithWeaselHandler::_ShowMessage(Context& ctx, Status& status) {
   } else {
     return m_ui->IsCountingDown();
   }
-}
-inline std::string _GetLabelText(const std::vector<Text>& labels,
-                                 int id,
-                                 const wchar_t* format) {
-  wchar_t buffer[128];
-  swprintf_s<128>(buffer, format, labels.at(id).str.c_str());
-  return wtou8(std::wstring(buffer));
 }
 
 bool RimeWithWeaselHandler::_Respond(WeaselSessionId ipc_id, EatLine eat) {
@@ -1470,31 +1462,6 @@ void RimeWithWeaselHandler::_GetStatus(Status& stat,
       }
     }
     rime_api->free_status(&status);
-  }
-}
-
-void RimeWithWeaselHandler::_GetContext(Context& weasel_context,
-                                        RimeSessionId session_id) {
-  RIME_STRUCT(RimeContext, ctx);
-  if (rime_api->get_context(session_id, &ctx)) {
-    if (ctx.composition.length > 0) {
-      weasel_context.preedit.str = u8tow(ctx.composition.preedit);
-      if (ctx.composition.sel_start < ctx.composition.sel_end) {
-        TextAttribute attr;
-        attr.type = HIGHLIGHTED;
-        attr.range.start =
-            utf8towcslen(ctx.composition.preedit, ctx.composition.sel_start);
-        attr.range.end =
-            utf8towcslen(ctx.composition.preedit, ctx.composition.sel_end);
-
-        weasel_context.preedit.attributes.push_back(attr);
-      }
-    }
-    if (ctx.menu.num_candidates) {
-      CandidateInfo& cinfo(weasel_context.cinfo);
-      _GetCandidateInfo(cinfo, ctx);
-    }
-    rime_api->free_context(&ctx);
   }
 }
 

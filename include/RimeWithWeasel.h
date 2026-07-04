@@ -23,9 +23,8 @@ typedef std::map<std::string, AppOptions, CaseInsensitiveCompare>
     AppOptionsByAppName;
 
 struct SessionStatus {
-  SessionStatus() : style(weasel::UIStyle()), __synced(false), session_id(0) {
-    RIME_STRUCT(RimeStatus, status);
-  }
+  SessionStatus()
+      : style(weasel::UIStyle()), status{}, __synced(false), session_id(0) {}
   weasel::UIStyle style;
   RimeStatus status;
   bool __synced;
@@ -80,7 +79,6 @@ class RimeWithWeaselHandler : public weasel::RequestHandler {
   void _GetStatus(weasel::Status& stat,
                   WeaselSessionId ipc_id,
                   weasel::Context& ctx);
-  void _GetContext(weasel::Context& ctx, RimeSessionId session_id);
   void _UpdateShowNotifications(RimeConfig* config, bool initialize = false);
 
   void _UpdateInlinePreeditStatus(WeaselSessionId ipc_id);
