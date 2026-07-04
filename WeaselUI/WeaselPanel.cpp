@@ -260,7 +260,7 @@ void WeaselPanel::_CaptureRect(CRect& rect) {
 
   // capture input window to clipboard
   if (!OpenClipboard()) {
-    DEBUG << "_CaptureRect: OpenClipord ailed";
+    DEBUG << "_CaptureRect: OpenClipboard failed";
     DeleteObject(bmp);
     ::ReleaseDC(NULL, ScreenDC);
     return;
@@ -639,9 +639,6 @@ bool WeaselPanel::_DrawPreedit(const Text& text,
     weasel::TextRange range = m_layout->GetPreeditRange();
 
     if (range.start < range.end) {
-      std::wstring before_str = t.substr(0, range.start);
-      std::wstring hilited_str = t.substr(range.start, range.end);
-      std::wstring after_str = t.substr(range.end);
       CSize beforeSz = m_layout->GetBeforeSize();
       CSize hilitedSz = m_layout->GetHilitedSize();
       CSize afterSz = m_layout->GetAfterSize();
@@ -1331,9 +1328,5 @@ void WeaselPanel::_TextOut(const CRect& rc,
 
   if (pDWR->pTextLayout != NULL) {
     pDWR->DrawTextLayoutAt({offsetx, offsety});
-#if 0
-    D2D1_RECT_F rectf =  D2D1::RectF(offsetx, offsety, offsetx + rc.Width(), offsety + rc.Height());
-    pDWR->DrawRect(&rectf);
-#endif
   }
 }

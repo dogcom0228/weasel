@@ -142,7 +142,6 @@ class DirectWriteResources {
     return pRenderTarget->CreateSolidColorBrush(
         color, pBrush.ReleaseAndGetAddressOf());
   }
-  void ResetLayout() { pTextLayout.Reset(); }
   void SetBrushColor(const D2D1_COLOR_F& color) { pBrush->SetColor(color); }
   void SetDpi(const UINT& dpi);
 
