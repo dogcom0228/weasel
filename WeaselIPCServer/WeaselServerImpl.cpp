@@ -8,7 +8,6 @@
 namespace weasel {
 class PipeServer : public PipeChannel<DWORD, PipeMessage> {
  public:
-  using ServerRunner = std::function<void()>;
   using Respond = std::function<void(Msg)>;
   using ServerHandler = std::function<void(PipeMessage, Respond)>;
 
@@ -16,8 +15,6 @@ class PipeServer : public PipeChannel<DWORD, PipeMessage> {
 
  public:
   void Listen(ServerHandler const& handler);
-  /* Get a server runner */
-  ServerRunner GetServerRunner(ServerHandler const& handler);
 
  private:
   void _ProcessPipeThread(HANDLE pipe, ServerHandler const& handler);
@@ -418,11 +415,6 @@ void PipeServer::Listen(ServerHandler const& handler) {
     }
     boost::this_thread::interruption_point();
   }
-}
-
-PipeServer::ServerRunner PipeServer::GetServerRunner(
-    ServerHandler const& handler) {
-  return [&handler, this]() { Listen(handler); };
 }
 
 void PipeServer::_ProcessPipeThread(HANDLE pipe, ServerHandler const& handler) {

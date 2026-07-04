@@ -1,9 +1,5 @@
 #pragma once
 
-namespace weasel {
-class Deserializr;
-}
-
 class Styler : public weasel::Deserializer {
  public:
   Styler(weasel::ResponseParser* pTarget);

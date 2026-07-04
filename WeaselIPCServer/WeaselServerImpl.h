@@ -14,7 +14,6 @@ class PipeServer;
 typedef CWinTraits<WS_DISABLED, WS_EX_TRANSPARENT> ServerWinTraits;
 
 class ServerImpl : public CWindowImpl<ServerImpl, CWindow, ServerWinTraits>
-// class ServerImpl
 {
  public:
   DECLARE_WND_CLASS(WEASEL_IPC_WINDOW)

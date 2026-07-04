@@ -29,7 +29,6 @@ void Deserializer::Initialize(ResponseParser* pTarget) {
 
 void Deserializer::Define(std::wstring const& action, Factory factory) {
   s_factories[action] = factory;
-  // s_factories.insert(make_pair(action, factory));
 }
 
 bool Deserializer::Require(std::wstring const& action,
@@ -46,6 +45,5 @@ bool Deserializer::Require(std::wstring const& action,
   Factory& factory = i->second;
 
   pTarget->deserializers[action] = factory(pTarget);
-  // pTarget->deserializers.insert(make_pair(action, factory(pTarget)));
   return true;
 }
