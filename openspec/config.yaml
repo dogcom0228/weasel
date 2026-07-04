@@ -1,0 +1,33 @@
+schema: spec-driven
+
+context: |
+  Project: Weasel (小狼毫), a Windows TSF input method (C++17, ATL/WTL, Boost, TSF),
+  fork of rime/weasel. First-party C++ (~18k LOC) bridges the upstream librime engine
+  to a Windows front-end. Modules: WeaselTSF (IME core DLL), WeaselUI (candidate window),
+  WeaselServer (server + tray, hosts Rime), RimeWithWeasel (librime<->Weasel bridge),
+  WeaselIPC/WeaselIPCServer (shared-mem + pipe IPC), WeaselDeployer, WeaselSetup.
+
+  This is a large refactor. Goals, in order: (1) simplify/minimize the C++ and apply better
+  design patterns; (2) PRESERVE all existing behavior (not a feature effort); (3) fix bugs
+  that are realistically fixable in this repo. Behavior preservation is paramount.
+
+  HARD CONSTRAINT: the dev box is Linux with no MSVC/Windows SDK, so the Windows code CANNOT
+  be compiled or run here. Changes must be small, mechanical, and reviewable by close reading.
+  The IPC text-protocol parser + include/WeaselIPCData.h data model + boost serialization ARE
+  testable on Linux via test/host/. The IPC text protocol and boost-archive payloads must stay
+  byte-identical. See CLAUDE.md for the full workflow (OpenSpec per change; adversarial review
+  agent before every commit; conventional commits on master).
+
+  Style: Chromium clang-format, SortIncludes: false. Do not touch include/wtl, librime, plum,
+  lib*, output (third-party / build output).
+
+rules:
+  proposal:
+    - State explicitly what behavior must remain byte-for-byte identical.
+    - Include a "Non-goals" section; keep scope to one commit-sized unit.
+  design:
+    - Name the verification method given the no-Windows-compile constraint (test/host harness,
+      close reading, and/or protocol byte-equivalence).
+  tasks:
+    - Order tasks safest-first; put any risky/structural step last.
+    - Include an explicit review + (if portable layer touched) test/host run step before commit.
