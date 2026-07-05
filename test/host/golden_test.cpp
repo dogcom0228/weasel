@@ -109,10 +109,60 @@ static void test_candidates_roundtrip() {
   BOOST_TEST(ctx.cinfo.is_last_page);
 }
 
+// Regression (bug): ctx.preedit.cursor with only two fields (start,end) must not
+// read a non-existent third field. The server normally sends three, but the
+// parser must not index out of bounds on a short message.
+static void test_preedit_cursor_two_fields() {
+  WCHAR resp[] =
+      L"action=ctx\n"
+      L"ctx.preedit=abc\n"
+      L"ctx.preedit.cursor=0,3\n";
+  std::wstring commit;
+  Context ctx;
+  Status st;
+  ResponseParser parse(&commit, &ctx, &st);
+  parse(resp, (UINT)wcslen(resp));
+  BOOST_TEST(ctx.preedit.str == L"abc");
+  BOOST_ASSERT(ctx.preedit.attributes.size() == 1);
+  BOOST_TEST_EQ(0, ctx.preedit.attributes[0].range.start);
+  BOOST_TEST_EQ(3, ctx.preedit.attributes[0].range.end);
+}
+
+// Correctness: config.inline_preedit sets the Config sink when one is provided.
+static void test_config_inline_preedit() {
+  WCHAR resp[] =
+      L"action=config\n"
+      L"config.inline_preedit=1\n";
+  std::wstring commit;
+  Context ctx;
+  Status st;
+  Config cfg;
+  ResponseParser parse(&commit, &ctx, &st, &cfg);
+  parse(resp, (UINT)wcslen(resp));
+  BOOST_TEST(cfg.inline_preedit);
+}
+
+// Regression (bug): config.* must not crash when no Config sink was provided
+// (p_config is null) even though a Context sink is. Reaching the end is the test.
+static void test_config_null_sink_safe() {
+  WCHAR resp[] =
+      L"action=config\n"
+      L"config.inline_preedit=1\n";
+  std::wstring commit;
+  Context ctx;
+  Status st;
+  ResponseParser parse(&commit, &ctx, &st);  // no Config sink
+  parse(resp, (UINT)wcslen(resp));
+  BOOST_TEST(ctx.empty());
+}
+
 int main() {
   test_noop();
   test_commit_unescape();
   test_ctx_and_status();
   test_candidates_roundtrip();
+  test_preedit_cursor_two_fields();
+  test_config_inline_preedit();
+  test_config_null_sink_safe();
   return boost::report_errors();
 }
