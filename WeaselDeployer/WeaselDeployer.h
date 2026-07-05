@@ -4,7 +4,6 @@
 #include <string>
 #include <atlstr.h>
 #include <Windows.h>
-#include "resource.h"
 
 #define MSG_BY_IDS(idInfo, idCap, uType)           \
   {                                                \

@@ -148,12 +148,6 @@ int install_ime_file(std::wstring& srcPath,
   retval += func(destPath, true, false, false, hant, silent);
   if (is_wow64()) {
     PVOID OldValue = NULL;
-    // PW64DW64FR fnWow64DisableWow64FsRedirection =
-    // (PW64DW64FR)GetProcAddress(GetModuleHandle(_T("kernel32.dll")),
-    // "Wow64DisableWow64FsRedirection"); PW64RW64FR
-    // fnWow64RevertWow64FsRedirection =
-    // (PW64RW64FR)GetProcAddress(GetModuleHandle(_T("kernel32.dll")),
-    // "Wow64RevertWow64FsRedirection");
     if (Wow64DisableWow64FsRedirection(&OldValue) == FALSE) {
       MSG_NOT_SILENT_BY_IDS(silent, IDS_STR_ERRCANCELFSREDIRECT,
                             IDS_STR_INSTALL_FAILED, MB_ICONERROR | MB_OK);

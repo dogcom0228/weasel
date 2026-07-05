@@ -173,11 +173,11 @@ LRESULT SwitcherSettingsDialog::OnOK(WORD, WORD code, HWND, BOOL&) {
       // MB_ICONEXCLAMATION);
       MSG_BY_IDS(IDS_STR_ERR_AT_LEAST_ONE_SEL, IDS_STR_NOT_REGULAR,
                  MB_OK | MB_ICONEXCLAMATION);
-      delete selection;
+      delete[] selection;
       return 0;
     }
     api_->select_schemas(settings_, selection, count);
-    delete selection;
+    delete[] selection;
   }
   EndDialog(code);
   return 0;

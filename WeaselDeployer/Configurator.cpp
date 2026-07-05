@@ -15,7 +15,6 @@
 #pragma warning(default : 4005)
 #include <filesystem>
 #include <fstream>
-#include "WeaselDeployer.h"
 
 static void CreateFileIfNotExist(std::string filename) {
   std::filesystem::path file_path = WeaselUserDataPath() / u8tow(filename);
