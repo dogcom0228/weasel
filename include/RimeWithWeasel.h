@@ -82,6 +82,7 @@ class RimeWithWeaselHandler : public weasel::RequestHandler {
   void _UpdateShowNotifications(RimeConfig* config, bool initialize = false);
 
   void _UpdateInlinePreeditStatus(WeaselSessionId ipc_id);
+  void _UpdateDarkModeColorScheme(RimeConfig* config, bool dark);
 
   RimeSessionId to_session_id(WeaselSessionId ipc_id) {
     // Non-inserting lookup: a stale/unknown ipc_id (e.g. a bogus IPC echo

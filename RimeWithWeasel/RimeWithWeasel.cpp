@@ -185,16 +185,7 @@ void RimeWithWeaselHandler::Initialize() {
     if (m_ui) {
       _UpdateUIStyle(&config, m_ui, true);
       _UpdateShowNotifications(&config, true);
-      m_current_dark_mode = IsUserDarkMode();
-      if (m_current_dark_mode) {
-        const int BUF_SIZE = 255;
-        char buffer[BUF_SIZE + 1] = {0};
-        if (rime_api->config_get_string(&config, "style/color_scheme_dark",
-                                        buffer, BUF_SIZE)) {
-          std::string color_name(buffer);
-          _UpdateUIStyleColor(&config, m_ui->style(), color_name);
-        }
-      }
+      _UpdateDarkModeColorScheme(&config, IsUserDarkMode());
       m_base_style = m_ui->style();
     }
     Bool global_ascii = false;
@@ -289,22 +280,27 @@ DWORD RimeWithWeaselHandler::RemoveSession(WeaselSessionId ipc_id) {
   return 0;
 }
 
+void RimeWithWeaselHandler::_UpdateDarkModeColorScheme(RimeConfig* config,
+                                                       bool dark) {
+  m_current_dark_mode = dark;
+  if (m_current_dark_mode) {
+    const int BUF_SIZE = 255;
+    char buffer[BUF_SIZE + 1] = {0};
+    if (rime_api->config_get_string(config, "style/color_scheme_dark", buffer,
+                                    BUF_SIZE)) {
+      std::string color_name(buffer);
+      _UpdateUIStyleColor(config, m_ui->style(), color_name);
+    }
+  }
+}
+
 void RimeWithWeaselHandler::UpdateColorTheme(BOOL darkMode) {
   RimeConfig config = {NULL};
   if (rime_api->config_open("weasel", &config)) {
     RimeConfigGuard config_guard(&config, true);
     if (m_ui) {
       _UpdateUIStyle(&config, m_ui, true);
-      m_current_dark_mode = darkMode;
-      if (darkMode) {
-        const int BUF_SIZE = 255;
-        char buffer[BUF_SIZE + 1] = {0};
-        if (rime_api->config_get_string(&config, "style/color_scheme_dark",
-                                        buffer, BUF_SIZE)) {
-          std::string color_name(buffer);
-          _UpdateUIStyleColor(&config, m_ui->style(), color_name);
-        }
-      }
+      _UpdateDarkModeColorScheme(&config, darkMode);
       m_base_style = m_ui->style();
     }
   }
