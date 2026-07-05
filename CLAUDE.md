@@ -114,6 +114,10 @@ evolve as we learn.
   `perf(Module):`, `chore:`, `build(xmake):`, `ci:`, `test(host):`. Commit directly on `master`.
 - The commit body should name the verification method used (harness / reference-proof / review),
   since there is no compiler here.
+- **After committing, verify the commit's file list** (`git show --stat`). Stage files explicitly,
+  not with a blanket `git add .`. Gotcha: a `git add` whose argument list names a path you already
+  `git rm`'d fails fatally and stages *nothing*, so a pre-staged deletion can land in a commit by
+  itself while your real edits are left behind — amend to fix.
 
 ## Module map
 
