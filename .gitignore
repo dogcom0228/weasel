@@ -59,3 +59,4 @@ arm64x_wrapper/*.exp
 # host test harness build outputs
 /test/host/golden_test
 /test/host/*.o
+/test/host/input_position_test

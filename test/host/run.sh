@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
-# Build and run Weasel's portable IPC-parser golden tests on a Linux host (no MSVC).
-# See test/host/README.md. Exit code = number of failing assertions (0 = all pass).
+# Build and run Weasel's portable host tests on Linux (no MSVC). Two suites:
+#   1) IPC text-protocol parser golden tests (needs the windows.h shim + Boost),
+#   2) input-position codec equivalence (pure portable, no deps).
+# See test/host/README.md. Exit code = total failing checks across suites (0 = all pass).
 set -euo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -29,6 +31,9 @@ conda activate "$ENV_NAME" 2>/dev/null || {
 CXX="${CXX:-x86_64-conda-linux-gnu-g++}"
 command -v "$CXX" >/dev/null 2>&1 || CXX=g++
 
+fail=0
+
+# --- Suite 1: IPC parser golden tests -----------------------------------------
 PARSER_SRC=(
   "$REPO/WeaselIPC/ResponseParser.cpp"
   "$REPO/WeaselIPC/Deserializer.cpp"
@@ -38,21 +43,37 @@ PARSER_SRC=(
   "$REPO/WeaselIPC/Configurator.cpp"
   "$REPO/WeaselIPC/Styler.cpp"
 )
-
-BIN="$HERE/golden_test"
-echo "[host-test] compiling with $CXX ..."
+GOLDEN="$HERE/golden_test"
+echo "[host-test] building parser golden_test ..."
 "$CXX" -std=c++17 -O0 -w -D_GLIBCXX_ASSERTIONS \
   -I "$HERE/shim" -I "$REPO/include" -I "$CONDA_PREFIX/include" \
   "$HERE/golden_test.cpp" "${PARSER_SRC[@]}" \
   -L "$CONDA_PREFIX/lib" -lboost_wserialization -lboost_serialization \
   -Wl,-rpath,"$CONDA_PREFIX/lib" \
-  -o "$BIN"
-
-echo "[host-test] running ..."
-if "$BIN" < /dev/null; then
-  echo "[host-test] PASS"
+  -o "$GOLDEN"
+if "$GOLDEN" < /dev/null; then
+  echo "[host-test] golden_test PASS"
 else
-  rc=$?
-  echo "[host-test] FAIL ($rc failing assertion(s))"
-  exit "$rc"
+  rc=$?; echo "[host-test] golden_test FAIL ($rc)"; fail=$((fail + rc))
+fi
+
+# --- Suite 2: input-position codec equivalence (pure portable) ----------------
+CODEC="$HERE/input_position_test"
+echo "[host-test] building input_position_test ..."
+"$CXX" -std=c++17 -O0 -w -D_GLIBCXX_ASSERTIONS \
+  -I "$REPO/include" \
+  "$HERE/input_position_test.cpp" \
+  -o "$CODEC"
+if "$CODEC" < /dev/null; then
+  echo "[host-test] input_position_test PASS"
+else
+  rc=$?; echo "[host-test] input_position_test FAIL ($rc)"; fail=$((fail + rc))
+fi
+
+# --- Summary ------------------------------------------------------------------
+if [ "$fail" -eq 0 ]; then
+  echo "[host-test] ALL PASS"
+else
+  echo "[host-test] FAIL ($fail failing check(s))"
+  exit "$fail"
 fi
