@@ -39,6 +39,51 @@ struct RimeStatusGuard {
   RimeStatusGuard(const RimeStatusGuard&) = delete;
   RimeStatusGuard& operator=(const RimeStatusGuard&) = delete;
 };
+struct RimeConfigGuard {
+  RimeConfig* p;
+  bool acquired;
+  RimeConfigGuard(RimeConfig* c, bool ok) : p(c), acquired(ok) {}
+  ~RimeConfigGuard() {
+    if (acquired)
+      rime_api->config_close(p);
+  }
+  RimeConfigGuard(const RimeConfigGuard&) = delete;
+  RimeConfigGuard& operator=(const RimeConfigGuard&) = delete;
+};
+struct RimeConfigIteratorGuard {
+  RimeConfigIterator* p;
+  bool acquired;
+  RimeConfigIteratorGuard(RimeConfigIterator* it, bool ok)
+      : p(it), acquired(ok) {}
+  ~RimeConfigIteratorGuard() {
+    if (acquired)
+      rime_api->config_end(p);
+  }
+  RimeConfigIteratorGuard(const RimeConfigIteratorGuard&) = delete;
+  RimeConfigIteratorGuard& operator=(const RimeConfigIteratorGuard&) = delete;
+};
+struct RimeContextGuard {
+  RimeContext* p;
+  bool acquired;
+  RimeContextGuard(RimeContext* c, bool ok) : p(c), acquired(ok) {}
+  ~RimeContextGuard() {
+    if (acquired)
+      rime_api->free_context(p);
+  }
+  RimeContextGuard(const RimeContextGuard&) = delete;
+  RimeContextGuard& operator=(const RimeContextGuard&) = delete;
+};
+struct RimeCommitGuard {
+  RimeCommit* p;
+  bool acquired;
+  RimeCommitGuard(RimeCommit* c, bool ok) : p(c), acquired(ok) {}
+  ~RimeCommitGuard() {
+    if (acquired)
+      rime_api->free_commit(p);
+  }
+  RimeCommitGuard(const RimeCommitGuard&) = delete;
+  RimeCommitGuard& operator=(const RimeCommitGuard&) = delete;
+};
 }  // namespace
 
 WeaselSessionId _GenerateNewWeaselSessionId(SessionStatusMap sm, DWORD pid) {
@@ -136,6 +181,7 @@ void RimeWithWeaselHandler::Initialize() {
 
   RimeConfig config = {NULL};
   if (rime_api->config_open("weasel", &config)) {
+    RimeConfigGuard config_guard(&config, true);
     if (m_ui) {
       _UpdateUIStyle(&config, m_ui, true);
       _UpdateShowNotifications(&config, true);
@@ -158,7 +204,6 @@ void RimeWithWeaselHandler::Initialize() {
                                   &m_show_notifications_time))
       m_show_notifications_time = 1200;
     _LoadAppOptions(&config, m_app_options);
-    rime_api->config_close(&config);
   }
   m_last_schema_id.clear();
 }
@@ -247,6 +292,7 @@ DWORD RimeWithWeaselHandler::RemoveSession(WeaselSessionId ipc_id) {
 void RimeWithWeaselHandler::UpdateColorTheme(BOOL darkMode) {
   RimeConfig config = {NULL};
   if (rime_api->config_open("weasel", &config)) {
+    RimeConfigGuard config_guard(&config, true);
     if (m_ui) {
       _UpdateUIStyle(&config, m_ui, true);
       m_current_dark_mode = darkMode;
@@ -261,7 +307,6 @@ void RimeWithWeaselHandler::UpdateColorTheme(BOOL darkMode) {
       }
       m_base_style = m_ui->style();
     }
-    rime_api->config_close(&config);
   }
 
   for (auto& pair : m_session_status_map) {
@@ -577,6 +622,7 @@ void RimeWithWeaselHandler::_LoadSchemaSpecificSettings(
   RimeConfig config;
   if (!rime_api->schema_open(schema_id.c_str(), &config))
     return;
+  RimeConfigGuard config_guard(&config, true);
   _UpdateShowNotifications(&config);
   m_ui->style() = m_base_style;
   _UpdateUIStyle(&config, m_ui, false);
@@ -591,13 +637,13 @@ void RimeWithWeaselHandler::_LoadSchemaSpecificSettings(
     RimeConfigIterator preset = {0};
     if (rime_api->config_begin_map(
             &preset, &config, ("preset_color_schemes/" + color_name).c_str())) {
+      RimeConfigIteratorGuard preset_guard(&preset, true);
       _UpdateUIStyleColor(&config, style, color_name);
-      rime_api->config_end(&preset);
     } else {
       RimeConfig weaselconfig;
       if (rime_api->config_open("weasel", &weaselconfig)) {
+        RimeConfigGuard weaselconfig_guard(&weaselconfig, true);
         _UpdateUIStyleColor(&weaselconfig, style, color_name);
-        rime_api->config_close(&weaselconfig);
       }
     }
   };
@@ -631,7 +677,6 @@ void RimeWithWeaselHandler::_LoadSchemaSpecificSettings(
     style.current_half_icon = load_icon(config, "schema/half_icon", NULL);
   }
   // load schema icon end
-  rime_api->config_close(&config);
 }
 
 void RimeWithWeaselHandler::_LoadAppInlinePreeditSet(WeaselSessionId ipc_id,
@@ -671,12 +716,12 @@ void RimeWithWeaselHandler::_LoadAppInlinePreeditSet(WeaselSessionId ipc_id,
       std::string schema_id = status.schema_id;
       RimeConfig config;
       if (rime_api->schema_open(schema_id.c_str(), &config)) {
+        RimeConfigGuard config_guard(&config, true);
         Bool value = False;
         if (rime_api->config_get_bool(&config, "style/inline_preedit",
                                       &value)) {
           session_status.style.inline_preedit = value;
         }
-        rime_api->config_close(&config);
       }
     }
   }
@@ -755,10 +800,10 @@ bool RimeWithWeaselHandler::_Respond(WeaselSessionId ipc_id, EatLine eat) {
   RimeSessionId session_id = session_status.session_id;
   RIME_STRUCT(RimeCommit, commit);
   if (rime_api->get_commit(session_id, &commit)) {
+    RimeCommitGuard commit_guard(&commit, true);
     actions.push_back("commit");
     std::wstring commit_text_w = escape_string(u8tow(commit.text));
     body.append(L"commit=").append(commit_text_w).append(L"\n");
-    rime_api->free_commit(&commit);
   }
 
   bool is_composing = false;
@@ -796,6 +841,7 @@ bool RimeWithWeaselHandler::_Respond(WeaselSessionId ipc_id, EatLine eat) {
 
   RIME_STRUCT(RimeContext, ctx);
   if (rime_api->get_context(session_id, &ctx)) {
+    RimeContextGuard ctx_guard(&ctx, true);
     bool has_candidates = ctx.menu.num_candidates > 0;
     CandidateInfo cinfo;
     if (has_candidates) {
@@ -900,7 +946,6 @@ bool RimeWithWeaselHandler::_Respond(WeaselSessionId ipc_id, EatLine eat) {
       auto s = ss.str();
       body.append(L"ctx.cand=").append(std::move(s)).append(L"\n");
     }
-    rime_api->free_context(&ctx);
   }
 
   // configuration information
@@ -1115,10 +1160,10 @@ static void ForEachRimeMap(
   RimeConfigIterator iter;
   if (!rime_api->config_begin_map(&iter, config, path.c_str()))
     return;
+  RimeConfigIteratorGuard iter_guard(&iter, true);
   while (rime_api->config_next(&iter)) {
     cb(iter.key, iter.path);
   }
-  rime_api->config_end(&iter);
 }
 
 // Helper to iterate a Rime list and invoke callback with item path
@@ -1129,10 +1174,10 @@ static void ForEachRimeList(
   RimeConfigIterator iter;
   if (!rime_api->config_begin_list(&iter, config, path.c_str()))
     return;
+  RimeConfigIteratorGuard iter_guard(&iter, true);
   while (rime_api->config_next(&iter)) {
     cb(iter.path);
   }
-  rime_api->config_end(&iter);
 }
 
 void RimeWithWeaselHandler::_UpdateShowNotifications(RimeConfig* config,
