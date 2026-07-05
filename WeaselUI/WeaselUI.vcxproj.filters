@@ -71,6 +71,9 @@
     <ClInclude Include="Layout.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="UIColor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="StandardLayout.h">
       <Filter>Header Files\Layouts</Filter>
     </ClInclude>

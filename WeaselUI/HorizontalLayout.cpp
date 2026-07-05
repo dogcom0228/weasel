@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "HorizontalLayout.h"
+#include "UIColor.h"
 
 using namespace weasel;
 
@@ -9,7 +10,7 @@ void HorizontalLayout::DoLayout(CDCHandle dc, PDWR pDWR) {
   int w = offsetX + real_margin_x;
 
   /* calc mark_text sizes */
-  if ((_style.hilited_mark_color & 0xff000000)) {
+  if (COLORNOTTRANSPARENT(_style.hilited_mark_color)) {
     CSize sg;
     if (candidates_count) {
       if (_style.mark_text.empty())
@@ -31,7 +32,7 @@ void HorizontalLayout::DoLayout(CDCHandle dc, PDWR pDWR) {
     mark_gap = (_style.mark_text.empty()) ? mark_width
                                           : mark_width + _style.hilite_spacing;
   }
-  int base_offset = ((_style.hilited_mark_color & 0xff000000)) ? mark_gap : 0;
+  int base_offset = COLORNOTTRANSPARENT(_style.hilited_mark_color) ? mark_gap : 0;
 
   // calc page indicator
   CSize pgszl, pgszr;
@@ -39,8 +40,8 @@ void HorizontalLayout::DoLayout(CDCHandle dc, PDWR pDWR) {
     GetTextSizeDW(pre, pre.length(), pDWR->pPreeditTextFormat, pDWR, &pgszl);
     GetTextSizeDW(next, next.length(), pDWR->pPreeditTextFormat, pDWR, &pgszr);
   }
-  bool page_en = (_style.prevpage_color & 0xff000000) &&
-                 (_style.nextpage_color & 0xff000000);
+  bool page_en = COLORNOTTRANSPARENT(_style.prevpage_color) &&
+                 COLORNOTTRANSPARENT(_style.nextpage_color);
   int pgw = page_en ? (pgszl.cx + pgszr.cx + _style.hilite_spacing +
                        _style.hilite_padding_x * 2)
                     : 0;
@@ -109,8 +110,8 @@ void HorizontalLayout::DoLayout(CDCHandle dc, PDWR pDWR) {
 
       /* Comment */
       bool cmtFontNotTrans =
-          (i == id && (_style.hilited_comment_text_color & 0xff000000)) ||
-          (i != id && (_style.comment_text_color & 0xff000000));
+          (i == id && COLORNOTTRANSPARENT(_style.hilited_comment_text_color)) ||
+          (i != id && COLORNOTTRANSPARENT(_style.comment_text_color));
       if (!comments.at(i).str.empty() && cmtFontValid && cmtFontNotTrans) {
         const std::wstring& comment = comments.at(i).str;
         GetTextSizeDW(comment, comment.length(), pDWR->pCommentTextFormat, pDWR,

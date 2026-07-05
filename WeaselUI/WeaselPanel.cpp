@@ -14,14 +14,8 @@
 
 // for IDI_ZH, IDI_EN
 #include <resource.h>
-#define COLORTRANSPARENT(color) ((color & 0xff000000) == 0)
-#define COLORNOTTRANSPARENT(color) ((color & 0xff000000) != 0)
+#include "UIColor.h"
 #define TRANS_COLOR 0x00000000
-#define GDPCOLOR_FROM_COLORREF(color)                                \
-  Gdiplus::Color::MakeARGB(((color >> 24) & 0xff), GetRValue(color), \
-                           GetGValue(color), GetBValue(color))
-#define HALF_ALPHA_COLOR(color) \
-  ((((color & 0xff000000) >> 25) & 0xff) << 24) | (color & 0x00ffffff)
 
 #pragma comment(lib, "Shcore.lib")
 
