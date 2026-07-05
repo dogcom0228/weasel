@@ -207,7 +207,6 @@ void CCandidateList::UpdateUI(const Context& ctx, const Status& status) {
 
   /// In UWP, candidate window will only be shown
   /// if it is owned by active view window
-  //_UpdateOwner();
   _ui->Update(ctx, status);
   _UpdateUIElement();
 

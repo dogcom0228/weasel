@@ -23,6 +23,5 @@ class CDisplayAttributeInfoInput : public ITfDisplayAttributeInfo {
   const GUID* _pguid;
   const TF_DISPLAYATTRIBUTE* _pDisplayAttribute;
   const WCHAR* _pDescription;
-  const WCHAR* _pValueName;
   LONG _refCount;  // COM ref count
 };

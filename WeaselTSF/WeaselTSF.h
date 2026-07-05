@@ -99,9 +99,6 @@ class WeaselTSF : public ITfTextInputProcessorEx,
       __RPC__in REFGUID guidInfo,
       __RPC__deref_out_opt ITfDisplayAttributeInfo** ppInfo);
 
-  ///* ITfCompartmentEventSink */
-  // STDMETHODIMP OnChange(_In_ REFGUID guid);
-
   /* Compartments */
   BOOL _IsKeyboardDisabled();
   BOOL _IsKeyboardOpen();
@@ -191,10 +188,6 @@ class WeaselTSF : public ITfTextInputProcessorEx,
   void _Reconnect();
   std::wstring _GetRootDir();
 
-  bool isImmersive() const {
-    return (_activateFlags & TF_TMF_IMMERSIVEMODE) != 0;
-  }
-
   com_ptr<ITfThreadMgr> _pThreadMgr;
   TfClientId _tfClientId;
   DWORD _dwThreadMgrEventSinkCookie;
@@ -205,7 +198,6 @@ class WeaselTSF : public ITfTextInputProcessorEx,
   BOOL _fTestKeyDownPending, _fTestKeyUpPending;
 
   com_ptr<ITfContext> _pEditSessionContext;
-  std::wstring _editSessionText;
 
   com_ptr<CCompartmentEventSink> _pKeyboardCompartmentSink;
   com_ptr<CCompartmentEventSink> _pConvertionCompartmentSink;
@@ -223,7 +215,6 @@ class WeaselTSF : public ITfTextInputProcessorEx,
 
   /* Weasel Related */
   weasel::Client m_client;
-  DWORD _activateFlags;
 
   /* IME status */
   weasel::Status _status;

@@ -10,15 +10,6 @@
 #include "Compartment.h"
 #include "ResponseParser.h"
 
-static void error_message(const WCHAR* msg) {
-  static DWORD next_tick = 0;
-  DWORD now = GetTickCount();
-  if (now > next_tick) {
-    next_tick = now + 10000;  // (ms)
-    MessageBox(NULL, msg, get_weasel_ime_name().c_str(), MB_ICONERROR | MB_OK);
-  }
-}
-
 WeaselTSF::WeaselTSF() {
   _cRef = 1;
 
@@ -124,7 +115,6 @@ STDAPI WeaselTSF::ActivateEx(ITfThreadMgr* pThreadMgr,
                              TfClientId tfClientId,
                              DWORD dwFlags) {
   com_ptr<ITfDocumentMgr> pDocMgrFocus;
-  _activateFlags = dwFlags;
 
   _pThreadMgr = pThreadMgr;
   _tfClientId = tfClientId;

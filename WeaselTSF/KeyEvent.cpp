@@ -252,23 +252,3 @@ ibus::Keycode TranslateKeycode(UINT vkey, KeyInfo kinfo) {
   }
   return ibus::Null;
 }
-
-/*
-struct ModifierNameTableEntry
-{
-        LPCTSTR name;
-        ibus::Modifier modifier;
-};
-
-ModifierNameTableEntry MODIFIER_NAME_TABLE[] = {
-        { L"Shift", ibus::SHIFT_MASK },
-        { L"CapsLock", ibus::LOCK_MASK },
-        { L"Ctrl", ibus::CONTROL_MASK },
-        { L"Alt", ibus::MOD1_MASK },
-        { L"SUPER", ibus::SUPER_MASK },
-        { L"Hyper", ibus::HYPER_MASK },
-        { L"Meta", ibus::META_MASK },
-        { L"Release", ibus::RELEASE_MASK },
-        { NULL, ibus::NULL_MASK }
- };
-*/

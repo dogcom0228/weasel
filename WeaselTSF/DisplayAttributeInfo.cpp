@@ -3,7 +3,6 @@
 #include "DisplayAttributeInfo.h"
 #include "Globals.h"
 
-const WCHAR _daiInputName[] = L"DisplayAttributeInput";
 const WCHAR _daiDescription[] = L"Weasel Display Attribute Input";
 
 // change style only, leave color to app
@@ -23,7 +22,6 @@ CDisplayAttributeInfoInput::CDisplayAttributeInfoInput() {
   _pguid = &c_guidDisplayAttributeInput;
   _pDisplayAttribute = &_daiDisplayAttribute;
   _pDescription = _daiDescription;
-  _pValueName = _daiInputName;
 }
 
 CDisplayAttributeInfoInput::~CDisplayAttributeInfoInput() {
