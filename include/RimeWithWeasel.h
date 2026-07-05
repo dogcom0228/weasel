@@ -84,7 +84,10 @@ class RimeWithWeaselHandler : public weasel::RequestHandler {
   void _UpdateInlinePreeditStatus(WeaselSessionId ipc_id);
 
   RimeSessionId to_session_id(WeaselSessionId ipc_id) {
-    return m_session_status_map[ipc_id].session_id;
+    // Non-inserting lookup: a stale/unknown ipc_id (e.g. a bogus IPC echo
+    // id) must not fabricate a phantom session entry (rime/weasel#1303).
+    auto it = m_session_status_map.find(ipc_id);
+    return it != m_session_status_map.end() ? it->second.session_id : 0;
   }
   SessionStatus& get_session_status(WeaselSessionId ipc_id) {
     return m_session_status_map[ipc_id];
