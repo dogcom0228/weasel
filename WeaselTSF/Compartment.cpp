@@ -164,7 +164,7 @@ HRESULT WeaselTSF::_SetKeyboardOpen(BOOL fOpen) {
   com_ptr<ITfCompartmentMgr> pCompMgr;
 
   if (_pThreadMgr->QueryInterface(&pCompMgr) == S_OK) {
-    ITfCompartment* pCompartment;
+    com_ptr<ITfCompartment> pCompartment;
     if (pCompMgr->GetCompartment(GUID_COMPARTMENT_KEYBOARD_OPENCLOSE,
                                  &pCompartment) == S_OK) {
       VARIANT var;
@@ -181,17 +181,18 @@ HRESULT WeaselTSF::_GetCompartmentDWORD(DWORD& value, const GUID guid) {
   HRESULT hr = E_FAIL;
   com_ptr<ITfCompartmentMgr> pComMgr;
   if (_pThreadMgr->QueryInterface(&pComMgr) == S_OK) {
-    ITfCompartment* pCompartment;
+    com_ptr<ITfCompartment> pCompartment;
     if (pComMgr->GetCompartment(guid, &pCompartment) == S_OK) {
       VARIANT var;
       if (pCompartment->GetValue(&var) == S_OK) {
-        if (var.vt == VT_I4)
+        if (var.vt == VT_I4) {
           value = var.lVal;
-        else
+          hr = S_OK;
+        } else {
           hr = S_FALSE;
+        }
       }
     }
-    pCompartment->Release();
   }
   return hr;
 }
@@ -200,14 +201,13 @@ HRESULT WeaselTSF::_SetCompartmentDWORD(const DWORD& value, const GUID guid) {
   HRESULT hr = S_OK;
   com_ptr<ITfCompartmentMgr> pComMgr;
   if (_pThreadMgr->QueryInterface(&pComMgr) == S_OK) {
-    ITfCompartment* pCompartment;
+    com_ptr<ITfCompartment> pCompartment;
     if (pComMgr->GetCompartment(guid, &pCompartment) == S_OK) {
       VARIANT var;
       var.vt = VT_I4;
       var.lVal = value;
       hr = pCompartment->SetValue(_tfClientId, &var);
     }
-    pCompartment->Release();
   }
   return hr;
 }
