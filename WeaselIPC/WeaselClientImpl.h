@@ -34,6 +34,8 @@ class ClientImpl {
   bool _WriteClientInfo();
 
   LRESULT _SendMessage(WEASEL_IPC_COMMAND Msg, DWORD wParam, DWORD lParam);
+  // Send `command` (with session_id) when the session is active; else false.
+  bool _ActiveSendMessage(WEASEL_IPC_COMMAND command, DWORD param);
 
   bool _Active() const { return channel.Connected() && session_id != 0; }
 

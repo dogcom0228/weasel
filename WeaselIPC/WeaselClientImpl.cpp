@@ -65,43 +65,31 @@ bool ClientImpl::ProcessKeyEvent(KeyEvent const& keyEvent) {
   return ret != 0;
 }
 
-bool ClientImpl::CommitComposition() {
+bool ClientImpl::_ActiveSendMessage(WEASEL_IPC_COMMAND command, DWORD param) {
   if (!_Active())
     return false;
+  return _SendMessage(command, param, session_id) != 0;
+}
 
-  LRESULT ret = _SendMessage(WEASEL_IPC_COMMIT_COMPOSITION, 0, session_id);
-  return ret != 0;
+bool ClientImpl::CommitComposition() {
+  return _ActiveSendMessage(WEASEL_IPC_COMMIT_COMPOSITION, 0);
 }
 
 bool ClientImpl::ClearComposition() {
-  if (!_Active())
-    return false;
-
-  LRESULT ret = _SendMessage(WEASEL_IPC_CLEAR_COMPOSITION, 0, session_id);
-  return ret != 0;
+  return _ActiveSendMessage(WEASEL_IPC_CLEAR_COMPOSITION, 0);
 }
 
 bool ClientImpl::SelectCandidateOnCurrentPage(size_t index) {
-  if (!_Active())
-    return false;
-  LRESULT ret = _SendMessage(WEASEL_IPC_SELECT_CANDIDATE_ON_CURRENT_PAGE, index,
-                             session_id);
-  return ret != 0;
+  return _ActiveSendMessage(WEASEL_IPC_SELECT_CANDIDATE_ON_CURRENT_PAGE, index);
 }
 
 bool ClientImpl::HighlightCandidateOnCurrentPage(size_t index) {
-  if (!_Active())
-    return false;
-  LRESULT ret = _SendMessage(WEASEL_IPC_HIGHLIGHT_CANDIDATE_ON_CURRENT_PAGE,
-                             index, session_id);
-  return ret != 0;
+  return _ActiveSendMessage(WEASEL_IPC_HIGHLIGHT_CANDIDATE_ON_CURRENT_PAGE,
+                            index);
 }
 
 bool ClientImpl::ChangePage(bool backward) {
-  if (!_Active())
-    return false;
-  LRESULT ret = _SendMessage(WEASEL_IPC_CHANGE_PAGE, backward, session_id);
-  return ret != 0;
+  return _ActiveSendMessage(WEASEL_IPC_CHANGE_PAGE, backward);
 }
 
 void ClientImpl::UpdateInputPosition(RECT const& rc) {
