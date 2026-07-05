@@ -44,12 +44,76 @@ Because of this, the safety net is **review + the portable test harness**, not c
 
 Roadmap and full module/issue audit are tracked in OpenSpec changes and in agent memory.
 
-## Conventions
+## Conventions (living — Convention over Configuration)
 
-- Style: **Chromium** `clang-format`, `SortIncludes: false`. Match surrounding code exactly.
-- Commit prefixes match history: `refactor(Module):`, `fix(Module):`, `perf(Module):`,
-  `chore:`, `build(xmake):`, `ci:`.
-- Do **not** touch `include/wtl/`, `librime/`, `plum/`, `lib*/`, `output/` (third-party / build output).
+Working conventions for this refactor, distilled from experience. They override unstated defaults.
+**Mutable:** when one proves unsuitable, change it here and note why — this section is meant to
+evolve as we learn.
+
+### Editing
+
+- **Line endings are MIXED — some files are CRLF, some LF, and there is no `.gitattributes`.**
+  Preserve each file's endings. The `Edit` tool preserves them — prefer it. For scripted/bulk edits,
+  work in BINARY: detect the newline (`b'\r\n' if b'\r\n' in data else b'\n'`) and write bytes. After
+  ANY edit, check `git diff --stat`: churn far larger than your change means a line-ending (or
+  BOM/encoding) accident — revert and redo. Some files also carry a UTF-8 BOM (e.g.
+  `WeaselServer.cpp`); don't strip it.
+- Match surrounding code exactly: **Chromium** `clang-format`, `SortIncludes: false`.
+- Never touch third-party / build-output trees: `include/wtl/`, `librime/`, `plum/`, `lib*/`,
+  `output/`.
+- `include/rime*.h` (the librime C API, incl. `RIME_STRUCT`) is git-ignored and **not present
+  locally** — you cannot read it from the tree; don't rely on being able to.
+
+### Proving code is "dead" (required before ANY removal — no compiler to catch mistakes)
+
+- Grep the WHOLE repo across ALL file kinds: `*.cpp *.h *.hpp *.c *.cc *.rc *.def *.idl *.vcxproj
+  *.vcxproj.filters *.lua *.props` (exclude `output librime plum include/wtl lib lib64 .git`).
+- A symbol is dead only with ZERO references beyond its own decl/def. Watch the traps: **COM
+  interface methods** (invoked via vtables — check the base interface and `WeaselTSF.def` exports),
+  factory/registration code reached indirectly, function pointers, and build globs.
+- Be conservative: <95% sure → leave it and note it. Removing a truly-unreferenced symbol can't
+  change behavior, but a wrong "dead" call breaks an un-buildable module.
+- Do NOT delete code that looks like an **unwired feature** (written and correct but never called —
+  e.g. `DirectWriteResources::SetDpi`) during a mechanical pass; it may be a latent "should be
+  called" bug. Flag it for separate investigation instead.
+
+### Build files
+
+- `xmake.lua` **globs `./*.cpp`** → adding/deleting a `.cpp` needs NO xmake edit; it never lists
+  headers.
+- `.vcxproj` / `.vcxproj.filters` list every source AND header **explicitly** → when you add/delete a
+  file you MUST update both (the `<ClCompile>`/`<ClInclude>` entry and its filter block) or the MSVC
+  build breaks. `weasel.sln` references projects, not files.
+
+### OpenSpec
+
+- One roadmap item = one change = one commit. `proposal.md` + `tasks.md` are the minimum; add
+  `design.md` only for cross-cutting/ambiguous work; add a `specs/` delta only when a
+  **requirement/behavior** actually changes.
+- Archiving: a requirement/behavior change gets a real spec delta (`openspec archive <name>`); a
+  pure mechanical refactor / dead-code change with no requirement change uses
+  `openspec archive <name> --skip-specs --no-validate -y` (the spec-driven schema demands a delta —
+  this is the sanctioned escape for spec-less changes, so `openspec/specs/` stays meaningful).
+- Every `proposal.md` states what must stay byte-identical and has a **Non-goals** section; every
+  `tasks.md` ends with an explicit review + (if the portable layer is touched) harness-run step.
+
+### Scope & safety
+
+- Keep changes small and single-purpose. When a mechanical change surfaces a **behavior fix** that
+  needs more verification than close reading gives, SPLIT it into the right bug-fix change: record
+  the bug (agent memory / roadmap) and fix it there, TDD via the harness where possible. (Bugs found
+  so far route to `fix-ipc-parser-field-bugs`.)
+- Sequence risky/structural work AFTER the safe foundations it depends on (see the wave roadmap).
+
+### Commits & review
+
+- **A separate adversarial review agent must pass on the diff before EVERY commit.** It re-proves
+  deadness independently, checks line-ending/scope integrity, and (portable layer) confirms
+  `test/host/run.sh` is green.
+- Conventional-commit subjects matching history: `refactor(Module):`, `fix(Module):`,
+  `perf(Module):`, `chore:`, `build(xmake):`, `ci:`, `test(host):`. Commit directly on `master`.
+- The commit body should name the verification method used (harness / reference-proof / review),
+  since there is no compiler here.
 
 ## Module map
 
