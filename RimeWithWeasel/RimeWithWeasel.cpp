@@ -23,6 +23,24 @@ typedef enum { COLOR_ABGR = 0, COLOR_ARGB, COLOR_RGBA } ColorFormat;
 using namespace weasel;
 
 static RimeApi* rime_api;
+
+namespace {
+// RAII: frees a Rime status handle at scope exit iff it was acquired.
+// Placed as the first statement inside an `if (get_status(...))` block so the
+// free happens at the same closing brace as the previous manual free_status.
+struct RimeStatusGuard {
+  RimeStatus* p;
+  bool acquired;
+  RimeStatusGuard(RimeStatus* s, bool ok) : p(s), acquired(ok) {}
+  ~RimeStatusGuard() {
+    if (acquired)
+      rime_api->free_status(p);
+  }
+  RimeStatusGuard(const RimeStatusGuard&) = delete;
+  RimeStatusGuard& operator=(const RimeStatusGuard&) = delete;
+};
+}  // namespace
+
 WeaselSessionId _GenerateNewWeaselSessionId(SessionStatusMap sm, DWORD pid) {
   if (sm.empty())
     return (WeaselSessionId)(pid + 1);
@@ -191,6 +209,7 @@ DWORD RimeWithWeaselHandler::AddSession(LPWSTR buffer, EatLine eat) {
 
   RIME_STRUCT(RimeStatus, status);
   if (rime_api->get_status(session_id, &status)) {
+    RimeStatusGuard status_guard(&status, true);
     std::string schema_id = status.schema_id;
     m_last_schema_id = schema_id;
     _LoadSchemaSpecificSettings(ipc_id, schema_id);
@@ -199,7 +218,6 @@ DWORD RimeWithWeaselHandler::AddSession(LPWSTR buffer, EatLine eat) {
     _RefreshTrayIcon(session_id, _UpdateUICallback);
     session_status.status = status;
     session_status.__synced = false;
-    rime_api->free_status(&status);
   }
   m_ui->style() = session_status.style;
   // show session's welcome message :-) if any
@@ -249,12 +267,12 @@ void RimeWithWeaselHandler::UpdateColorTheme(BOOL darkMode) {
   for (auto& pair : m_session_status_map) {
     RIME_STRUCT(RimeStatus, status);
     if (rime_api->get_status(to_session_id(pair.first), &status)) {
+      RimeStatusGuard status_guard(&status, true);
       _LoadSchemaSpecificSettings(pair.first, std::string(status.schema_id));
       _LoadAppInlinePreeditSet(pair.first, true);
       _UpdateInlinePreeditStatus(pair.first);
       pair.second.status = status;
       pair.second.__synced = false;
-      rime_api->free_status(&status);
     }
   }
   m_ui->style() = get_session_status(m_active_session).style;
@@ -649,6 +667,7 @@ void RimeWithWeaselHandler::_LoadAppInlinePreeditSet(WeaselSessionId ipc_id,
     // load from schema.
     RIME_STRUCT(RimeStatus, status);
     if (rime_api->get_status(session_id, &status)) {
+      RimeStatusGuard status_guard(&status, true);
       std::string schema_id = status.schema_id;
       RimeConfig config;
       if (rime_api->schema_open(schema_id.c_str(), &config)) {
@@ -659,7 +678,6 @@ void RimeWithWeaselHandler::_LoadAppInlinePreeditSet(WeaselSessionId ipc_id,
         }
         rime_api->config_close(&config);
       }
-      rime_api->free_status(&status);
     }
   }
   if (session_status.style.inline_preedit != inline_preedit)
@@ -747,6 +765,7 @@ bool RimeWithWeaselHandler::_Respond(WeaselSessionId ipc_id, EatLine eat) {
   RIME_STRUCT(RimeStatus, status);
   static const std::wstring Bool_wstring[] = {L"0", L"1"};
   if (rime_api->get_status(session_id, &status)) {
+    RimeStatusGuard status_guard(&status, true);
     is_composing = !!status.is_composing;
     actions.push_back("status");
     body.append(L"status.ascii_mode=")
@@ -773,7 +792,6 @@ bool RimeWithWeaselHandler::_Respond(WeaselSessionId ipc_id, EatLine eat) {
       }
     }
     session_status.status = status;
-    rime_api->free_status(&status);
   }
 
   RIME_STRUCT(RimeContext, ctx);
@@ -1431,6 +1449,7 @@ void RimeWithWeaselHandler::_GetStatus(Status& stat,
   RimeSessionId session_id = session_status.session_id;
   RIME_STRUCT(RimeStatus, status);
   if (rime_api->get_status(session_id, &status)) {
+    RimeStatusGuard status_guard(&status, true);
     std::string schema_id = "";
     if (status.schema_id)
       schema_id = status.schema_id;
@@ -1461,7 +1480,6 @@ void RimeWithWeaselHandler::_GetStatus(Status& stat,
         }
       }
     }
-    rime_api->free_status(&status);
   }
 }
 
