@@ -156,6 +156,38 @@ static void test_config_null_sink_safe() {
   BOOST_TEST(ctx.empty());
 }
 
+// Regression (robustness): a corrupted `ctx.cand=` blob whose string-length
+// field is absurd makes the underlying wstring::resize throw std::length_error
+// — which is NOT a boost archive_exception. TryDeserialize must contain it so
+// a malformed IPC payload cannot crash the host application, and the parser
+// must keep consuming subsequent lines.
+static void test_corrupt_cand_blob_no_crash() {
+  CandidateInfo ci;
+  ci.currentPage = 0;
+  ci.totalPages = 1;
+  ci.highlighted = 0;
+  ci.candies.push_back(Text(L"cand-A"));
+
+  std::wstring blob = cand_blob(ci);
+  // The text archive stores the candidate string as "<len> <chars>"; corrupt
+  // the length of "cand-A" to a value wstring::resize must reject.
+  const std::wstring good = L"6 cand-A";
+  std::size_t pos = blob.find(good);
+  BOOST_ASSERT(pos != std::wstring::npos);  // archive layout as expected
+  blob.replace(pos, good.size(), L"9999999999999999999 cand-A");
+
+  // blob already ends with the archive's trailing newline, so the status line
+  // that follows starts a fresh protocol line.
+  std::wstring resp = L"action=ctx,status\nctx.cand=" + blob;
+  resp += L"status.ascii_mode=1\n";
+  std::wstring commit;
+  Context ctx;
+  Status st;
+  ResponseParser parse(&commit, &ctx, &st);
+  parse((LPWSTR)resp.c_str(), (UINT)resp.size());
+  BOOST_TEST(st.ascii_mode);  // parser survived the corrupt blob and kept going
+}
+
 int main() {
   test_noop();
   test_commit_unescape();
@@ -164,5 +196,6 @@ int main() {
   test_preedit_cursor_two_fields();
   test_config_inline_preedit();
   test_config_null_sink_safe();
+  test_corrupt_cand_blob_no_crash();
   return boost::report_errors();
 }

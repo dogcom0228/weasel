@@ -12,6 +12,12 @@ void TryDeserialize(boost::archive::text_wiarchive& ia, T& t) {
     const std::string msg =
         std::string("boost::archive::archive_exception: ") + e.what();
     MessageBoxA(NULL, msg.c_str(), "IPC exception", MB_OK | MB_ICONERROR);
+  } catch (const std::exception& e) {
+    // A malformed payload can throw beyond archive_exception (e.g.
+    // std::length_error from a corrupted string length); it must never
+    // unwind into the host application's input path.
+    const std::string msg = std::string("std::exception: ") + e.what();
+    MessageBoxA(NULL, msg.c_str(), "IPC exception", MB_OK | MB_ICONERROR);
   }
 }
 class Deserializer {
