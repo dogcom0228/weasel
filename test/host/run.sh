@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Build and run Weasel's portable host tests on Linux (no MSVC). Two suites:
+# Build and run Weasel's portable host tests on Linux (no MSVC). Three suites:
 #   1) IPC text-protocol parser golden tests (needs the windows.h shim + Boost),
-#   2) input-position codec equivalence (pure portable, no deps).
+#   2) input-position codec equivalence (pure portable, no deps),
+#   3) label-format safety (format_label; pure portable, no deps).
 # See test/host/README.md. Exit code = total failing checks across suites (0 = all pass).
 set -euo pipefail
 
@@ -68,6 +69,19 @@ if "$CODEC" < /dev/null; then
   echo "[host-test] input_position_test PASS"
 else
   rc=$?; echo "[host-test] input_position_test FAIL ($rc)"; fail=$((fail + rc))
+fi
+
+# --- Suite 3: label-format safety (pure portable) -----------------------------
+LABELFMT="$HERE/format_label_test"
+echo "[host-test] building format_label_test ..."
+"$CXX" -std=c++17 -O0 -w -D_GLIBCXX_ASSERTIONS \
+  -I "$REPO/include" \
+  "$HERE/format_label_test.cpp" \
+  -o "$LABELFMT"
+if "$LABELFMT" < /dev/null; then
+  echo "[host-test] format_label_test PASS"
+else
+  rc=$?; echo "[host-test] format_label_test FAIL ($rc)"; fail=$((fail + rc))
 fi
 
 # --- Summary ------------------------------------------------------------------

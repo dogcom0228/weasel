@@ -1,14 +1,14 @@
 #include "stdafx.h"
 #include "StandardLayout.h"
 
+#include <StringAlgorithm.hpp>
+
 using namespace weasel;
 
 std::wstring StandardLayout::GetLabelText(const std::vector<Text>& labels,
                                           int id,
                                           const wchar_t* format) const {
-  wchar_t buffer[128];
-  swprintf_s<128>(buffer, format, labels.at(id).str.c_str());
-  return std::wstring(buffer);
+  return format_label(format, labels.at(id).str);
 }
 
 void weasel::StandardLayout::GetTextSizeDW(

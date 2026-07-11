@@ -901,11 +901,8 @@ bool RimeWithWeaselHandler::_Respond(WeaselSessionId ipc_id, EatLine eat) {
           for (auto i = 0; i < ctx.menu.num_candidates; i++) {
             std::wstring label_w;
             if (label_valid) {
-              wchar_t buf_lbl[128];
-              swprintf_s<128>(buf_lbl,
-                              session_status.style.label_text_format.c_str(),
-                              cinfo.labels.at(i).str.c_str());
-              label_w = std::wstring(buf_lbl);
+              label_w = format_label(session_status.style.label_text_format,
+                                     cinfo.labels.at(i).str);
             }
             std::wstring comment_w =
                 comment_valid ? cinfo.comments.at(i).str : std::wstring();

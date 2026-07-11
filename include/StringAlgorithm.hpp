@@ -65,3 +65,41 @@ inline void to_lower(std::wstring& wstr)
 	std::setlocale(LC_ALL, "");
 	std::transform(wstr.begin(), wstr.end(), wstr.begin(), std::towlower);
 }
+
+// Safely apply a user-configured candidate-label format (style/label_format,
+// default L"%s.") to a label. The FIRST "%s" is replaced by `label`, "%%" is a
+// literal '%', and every other character -- including a stray conversion such as
+// "%d" or "%n", or a trailing '%' -- is emitted verbatim. This replaces
+// swprintf_s(buffer, format, label) at the label-rendering sites: `format` is
+// user config, so a bogus conversion there would feed the CRT a non-existent
+// argument and trip the invalid-parameter handler, crashing the in-process host
+// application (or the server). Output is unbounded (no 127-wchar truncation).
+inline std::wstring format_label(const std::wstring& format,
+                                 const std::wstring& label)
+{
+	std::wstring out;
+	out.reserve(format.size() + label.size());
+	bool substituted = false;
+	for (std::size_t i = 0; i < format.size(); ++i)
+	{
+		if (format[i] == L'%' && i + 1 < format.size())
+		{
+			const wchar_t next = format[i + 1];
+			if (next == L's' && !substituted)
+			{
+				out += label;
+				substituted = true;
+				++i;
+				continue;
+			}
+			if (next == L'%')
+			{
+				out += L'%';
+				++i;
+				continue;
+			}
+		}
+		out += format[i];
+	}
+	return out;
+}

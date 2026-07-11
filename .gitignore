@@ -60,3 +60,4 @@ arm64x_wrapper/*.exp
 /test/host/golden_test
 /test/host/*.o
 /test/host/input_position_test
+/test/host/format_label_test
