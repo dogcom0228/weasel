@@ -51,17 +51,15 @@ void WeaselTrayIcon::Refresh() {
   WeaselTrayMode mode = m_status.disabled     ? DISABLED
                         : m_status.ascii_mode ? ASCII
                                               : ZHUNG;
-  /* change icon, when
-          1,mode changed
-          2,icon changed
-          3,both m_schema_zhung_icon and m_style.current_zhung_icon empty(for
-     initialize) 4,both m_schema_ascii_icon and m_style.current_ascii_icon
-     empty(for initialize)
-  */
+  /* change icon when either
+          1, the mode changed (the initial refresh is included: m_mode starts at
+             INITIAL, which `mode` is never), or
+          2, a schema's resolved icon path changed.
+     A no-op refresh (same mode, same icons) must NOT re-issue Shell_NotifyIcon,
+     otherwise the tray icon is re-set on every keystroke for schemas without
+     custom icons (the common case). Visibility recovery is handled below. */
   if (mode != m_mode || m_schema_zhung_icon != m_style.current_zhung_icon ||
-      (m_schema_zhung_icon.empty() && m_style.current_zhung_icon.empty()) ||
-      m_schema_ascii_icon != m_style.current_ascii_icon ||
-      (m_schema_ascii_icon.empty() && m_style.current_ascii_icon.empty())) {
+      m_schema_ascii_icon != m_style.current_ascii_icon) {
     ShowIcon();
     m_mode = mode;
     m_schema_zhung_icon = m_style.current_zhung_icon;
