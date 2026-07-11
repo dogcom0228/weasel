@@ -33,11 +33,11 @@ HKL FindIME(LANGID langid) {
         if (ret == ERROR_SUCCESS && type == REG_SZ &&
             _wcsicmp(data, L"weasel.ime") == 0)
           hKL = (HKL)id;
+        RegCloseKey(hSubKey);
       }
-      RegCloseKey(hSubKey);
     }
+    RegCloseKey(hKey);
   }
-  RegCloseKey(hKey);
   return hKL;
 }
 
