@@ -41,6 +41,7 @@ STDAPI WeaselTSF::OnEndEdit(ITfContext* pContext,
             _EndComposition(pContext, true);
           pRangeComposition->Release();
         }
+        tfSelection.range->Release();
       }
     }
   }
