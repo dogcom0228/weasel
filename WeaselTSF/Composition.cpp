@@ -160,12 +160,10 @@ class CGetTextExtentEditSession : public CEditSession {
 
 STDAPI CGetTextExtentEditSession::DoEditSession(TfEditCookie ec) {
   com_ptr<ITfInsertAtSelection> pInsertAtSelection;
-  com_ptr<ITfRange> pRangeComposition;
-  ITfRange* pRange;
   RECT rc;
   BOOL fClipped;
   TF_SELECTION selection;
-  ULONG nSelection;
+  ULONG nSelection = 0;
 
   if (FAILED(_pContext->QueryInterface(IID_ITfInsertAtSelection,
                                        (LPVOID*)&pInsertAtSelection)))
@@ -174,15 +172,23 @@ STDAPI CGetTextExtentEditSession::DoEditSession(TfEditCookie ec) {
                                      &nSelection)))
     return E_FAIL;
 
+  // GetSelection AddRef'd selection.range when it fetched one; own it so it is
+  // released on every path (it previously leaked).
+  com_ptr<ITfRange> pSelectionRange;
+  if (nSelection >= 1)
+    pSelectionRange.Attach(selection.range);
+
+  com_ptr<ITfRange> pRange;
   if (_pComposition != nullptr && _pComposition->GetRange(&pRange) == S_OK) {
     pRange->Collapse(ec, TF_ANCHOR_START);
   } else {
     // composition end
     // note: selection.range is always an empty range
-    pRange = selection.range;
+    pRange = pSelectionRange;
   }
 
-  if ((_pContextView->GetTextExt(ec, pRange, &rc, &fClipped)) == S_OK &&
+  if (pRange != nullptr &&
+      (_pContextView->GetTextExt(ec, pRange, &rc, &fClipped)) == S_OK &&
       (rc.left != 0 || rc.top != 0)) {
     // get the foreground window pos and check if rc from GetTextExt is out of
     // window
