@@ -100,7 +100,7 @@ STDAPI WeaselTSF::Deactivate() {
 
   _UninitCompartment();
 
-  _UninitThreadMgrEventSink();
+  _UninitThreadFocusSink();
 
   _pThreadMgr = NULL;
 
@@ -183,16 +183,20 @@ BOOL WeaselTSF::_InitThreadFocusSink() {
     return FALSE;
   if (FAILED(pSource->AdviseSink(IID_ITfThreadFocusSink,
                                  (ITfThreadFocusSink*)this,
-                                 &_dwThreadFocusSinkCookie)))
+                                 &_dwThreadFocusSinkCookie))) {
+    _dwThreadFocusSinkCookie = TF_INVALID_COOKIE;
     return FALSE;
+  }
   return TRUE;
 }
 void WeaselTSF::_UninitThreadFocusSink() {
+  if (_dwThreadFocusSinkCookie == TF_INVALID_COOKIE)
+    return;
   com_ptr<ITfSource> pSource;
-  if (FAILED(_pThreadMgr->QueryInterface(&pSource)))
-    return;
-  if (FAILED(pSource->UnadviseSink(_dwThreadFocusSinkCookie)))
-    return;
+  if (SUCCEEDED(_pThreadMgr->QueryInterface(&pSource))) {
+    pSource->UnadviseSink(_dwThreadFocusSinkCookie);
+  }
+  _dwThreadFocusSinkCookie = TF_INVALID_COOKIE;
 }
 
 STDMETHODIMP WeaselTSF::OnActivated(REFCLSID clsid,
