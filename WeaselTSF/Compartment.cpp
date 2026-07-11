@@ -75,6 +75,9 @@ HRESULT CCompartmentEventSink::_Unadvise() {
   HRESULT hr = S_OK;
   ITfSource* pSource = nullptr;
 
+  if (_compartment == nullptr)  // advise failed or never ran
+    return S_OK;
+
   hr = _compartment->QueryInterface(IID_ITfSource, (void**)&pSource);
   if (SUCCEEDED(hr)) {
     hr = pSource->UnadviseSink(_cookie);
@@ -219,7 +222,7 @@ BOOL WeaselTSF::_InitCompartment() {
   _pKeyboardCompartmentSink = new CCompartmentEventSink(callback);
   if (!_pKeyboardCompartmentSink)
     return FALSE;
-  DWORD hr = _pKeyboardCompartmentSink->_Advise(
+  HRESULT hr = _pKeyboardCompartmentSink->_Advise(
       (IUnknown*)_pThreadMgr, GUID_COMPARTMENT_KEYBOARD_OPENCLOSE);
 
   _pConvertionCompartmentSink = new CCompartmentEventSink(callback);
