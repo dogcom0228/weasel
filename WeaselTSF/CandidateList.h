@@ -76,10 +76,13 @@ class CCandidateList : public ITfIntegratableCandidateListUIElement,
   void _DisposeUIWindowAll();
   void _MakeUIWindow();
 
+  // ITfUIElementMgr element ids are opaque DWORDs; -1 marks "no element begun"
+  static constexpr DWORD kInvalidUIElementId = static_cast<DWORD>(-1);
+
   std::unique_ptr<weasel::UI> _ui;
   DWORD _cRef;
   com_ptr<WeaselTSF> _tsf;
-  DWORD uiid;
+  DWORD uiid = kInvalidUIElementId;
   TfIntegratableCandidateListSelectionStyle _selectionStyle =
       STYLE_ACTIVE_SELECTION;
 

@@ -18,6 +18,7 @@ WeaselTSF::WeaselTSF() {
   _dwTextEditSinkCookie = TF_INVALID_COOKIE;
   _dwTextLayoutSinkCookie = TF_INVALID_COOKIE;
   _dwThreadFocusSinkCookie = TF_INVALID_COOKIE;
+  _gaDisplayAttributeInput = TF_INVALID_GUIDATOM;
   _fTestKeyDownPending = FALSE;
   _fTestKeyUpPending = FALSE;
 

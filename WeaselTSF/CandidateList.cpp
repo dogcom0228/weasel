@@ -266,6 +266,9 @@ HWND CCandidateList::_GetActiveWnd() {
 HRESULT CCandidateList::_UpdateUIElement() {
   HRESULT hr = S_OK;
 
+  if (uiid == kInvalidUIElementId)  // no element begun yet
+    return S_OK;
+
   com_ptr<ITfUIElementMgr> pUIElementMgr;
   com_ptr<ITfThreadMgr> pThreadMgr = _tsf->_GetThreadMgr();
   if (nullptr == pThreadMgr) {
@@ -300,7 +303,8 @@ void CCandidateList::StartUI() {
                               bool* const next, bool* const scroll_next) {
       _tsf->HandleUICallback(sel, hov, next, scroll_next);
     });
-  pUIElementMgr->BeginUIElement(this, &_pbShow, &uiid);
+  if (FAILED(pUIElementMgr->BeginUIElement(this, &_pbShow, &uiid)))
+    uiid = kInvalidUIElementId;
   // pUIElementMgr->UpdateUIElement(uiid);
   if (_pbShow) {
     _ui->style() = _style;
@@ -315,8 +319,10 @@ void CCandidateList::EndUI() {
     auto hr = pThreadMgr->QueryInterface(&emgr);
     if (FAILED(hr))
       return;
-    if (emgr != NULL)
+    if (emgr != NULL && uiid != kInvalidUIElementId) {
       emgr->EndUIElement(uiid);
+      uiid = kInvalidUIElementId;
+    }
   }
   _DisposeUIWindow();
 }

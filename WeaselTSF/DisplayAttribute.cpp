@@ -27,6 +27,11 @@ BOOL WeaselTSF::_SetCompositionDisplayAttributes(TfEditCookie ec,
   ITfProperty* pDisplayAttributeProperty = nullptr;
   HRESULT hr = S_OK;
 
+  // atom registration is allowed to fail (some hosts lack display-attribute
+  // support); without a registered atom there is nothing valid to set
+  if (_gaDisplayAttributeInput == TF_INVALID_GUIDATOM)
+    return FALSE;
+
   if (pRangeComposition == nullptr)
     hr = _pComposition->GetRange(&pRangeComposition);
   if (FAILED(hr)) {
