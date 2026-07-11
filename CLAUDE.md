@@ -12,11 +12,14 @@ ongoing **refactor** whose rules are below.
 
 Behavior preservation is paramount. Prefer small, mechanical, reviewable edits.
 
-## ⚠️ Hard constraint: this box cannot compile the Windows code
+## ⚠️ Hard constraint: no MSVC on this box (yet)
 
 Weasel builds only on **Windows + MSVC** (ATL, WTL, TSF, Boost; `weasel.sln` / `xmake.lua`).
-The dev box is **Linux/WSL with no MSVC and no Windows SDK** — you **cannot build or run**
+The dev box is now **native Windows 11** (migrated off WSL 2026-07), but **MSVC and the
+Windows SDK are not installed** — you still **cannot build or run**
 WeaselTSF/WeaselUI/WeaselServer/etc. here. Every change is "blind" to the Windows compiler.
+(If VS Build Tools get installed, rewrite this section — real compilation would then become
+the first safety net.)
 
 Because of this, the safety net is **review + the portable test harness**, not compilation.
 
@@ -24,9 +27,10 @@ Because of this, the safety net is **review + the portable test harness**, not c
 
 - **Portable layer (IPC text-protocol parser + `include/WeaselIPCData.h` data model + boost
   serialization) IS testable on Linux** via `test/host/` — a `windows.h` shim + real parser
-  `.cpp`s + golden round-trip tests. Run it for ANY change touching that layer:
+  `.cpp`s + golden round-trip tests. Run it for ANY change touching that layer (from Windows,
+  via the still-present WSL distro; inside WSL it builds with the mamba env `wtest`, gxx 15 + boost):
   ```
-  test/host/run.sh        # builds with the mamba env `wtest` (gxx 15 + boost) and runs tests
+  wsl.exe -d Ubuntu-26.04 -- bash -lc "cd /mnt/d/workspace/weasel && ./test/host/run.sh"
   ```
 - Everything else is verified by **close reading + an adversarial review agent** (mandatory
   before every commit) and by keeping the IPC text protocol / boost-archive payloads
@@ -52,7 +56,10 @@ evolve as we learn.
 
 ### Editing
 
-- **Line endings are MIXED — some files are CRLF, some LF, and there is no `.gitattributes`.**
+- **Line endings are MIXED — some files are CRLF, some LF.** `.gitattributes` pins `* -text`
+  (no eol conversion) and the repo-local config sets `core.autocrlf=false` — Git-for-Windows'
+  system-level `autocrlf=true` once CRLF-converted the whole worktree and broke `run.sh`
+  (renormalized 2026-07-11); never re-enable conversion.
   Preserve each file's endings. The `Edit` tool preserves them — prefer it. For scripted/bulk edits,
   work in BINARY: detect the newline (`b'\r\n' if b'\r\n' in data else b'\n'`) and write bytes. After
   ANY edit, check `git diff --stat`: churn far larger than your change means a line-ending (or

@@ -1,0 +1,6 @@
+# Weasel has MIXED line endings (some files CRLF, some LF), preserved as-is.
+# Disable ALL eol conversion so every checkout is byte-identical to the repo.
+# (Git-for-Windows' default core.autocrlf=true would otherwise CRLF-convert
+# every LF file on checkout — it broke test/host/run.sh's shebang — and the
+# project convention is to preserve each file's original endings.)
+* -text
