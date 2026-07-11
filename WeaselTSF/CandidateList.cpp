@@ -57,9 +57,8 @@ STDMETHODIMP_(ULONG) CCandidateList::Release(void) {
 }
 
 STDMETHODIMP CCandidateList::GetDescription(BSTR* pbstr) {
-  static auto str = SysAllocString(L"Candidate List");
   if (pbstr) {
-    *pbstr = str;
+    *pbstr = SysAllocString(L"Candidate List");
   }
   return S_OK;
 }
@@ -124,7 +123,7 @@ STDMETHODIMP CCandidateList::GetString(UINT uIndex, BSTR* pbstr) {
     return E_INVALIDARG;
 
   auto& str = cinfo.candies[uIndex].str;
-  *pbstr = SysAllocStringLen(str.c_str(), static_cast<UINT>(str.size()) + 1);
+  *pbstr = SysAllocStringLen(str.c_str(), static_cast<UINT>(str.size()));
 
   return S_OK;
 }
